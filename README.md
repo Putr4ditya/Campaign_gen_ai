@@ -51,7 +51,7 @@ cp .env.example .env
 ```
 
 ### 4. Dapatkan Gemini API Key (Gratis)
-1. Buka https://aistudio.google.com/app/apikey
+1. Buka [https://aistudio.google.com/app/apikey](https://openrouter.ai/models)
 2. Klik **Create API Key**
 3. Copy dan paste ke file `.env`
 
