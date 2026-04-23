@@ -1,30 +1,20 @@
 import os
 import json
 import urllib.parse
+import requests
 from flask import Flask, render_template, request, jsonify
-import google.generativeai as genai
 from dotenv import load_dotenv
 
 load_dotenv()
 
 app = Flask(__name__)
 
-# Configure Gemini API
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
-if not GEMINI_API_KEY:
-    raise ValueError("GEMINI_API_KEY is not set in environment variables.")
+# ─── OpenRouter API ───────────────────────────────────────────────────────────
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY")
+if not OPENROUTER_API_KEY:
+    raise ValueError("OPENROUTER_API_KEY is not set in environment variables.")
 
-genai.configure(api_key=GEMINI_API_KEY)
-
-# ─── Gemini Model ─────────────────────────────────────────────────────────────
-model = genai.GenerativeModel(
-    model_name="gemini-2.0-flash-exp",
-    system_instruction=(
-        "You are an expert creative marketing strategist specializing in Indonesian SMEs (UMKM). "
-        "You craft compelling, culturally resonant campaigns that drive engagement and sales. "
-        "You MUST always respond with valid JSON only — no markdown, no code blocks, no extra text."
-    )
-)
+OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 # ─── Routes ───────────────────────────────────────────────────────────────────
 @app.route("/")
@@ -58,22 +48,44 @@ Return ONLY a single valid JSON object with exactly these keys:
   "headline": "Catchy main headline — max 10 words, in {language}",
   "tagline": "Memorable tagline — max 8 words, in {language}",
   "copywriting": "Compelling 2–3 paragraph product description & value proposition in {language}",
-  "image_prompt": "Highly detailed English prompt (60–80 words) for an AI image generator. Describe the product advertisement visual: style, lighting, composition, props, color palette, and mood that perfectly matches '{vibe}'. Make it vivid and specific.",
-  "instagram_caption": "Engaging Instagram caption with emojis in {language}, 150–200 words. Include a strong call-to-action.",
+  "image_prompt": "Highly detailed English prompt (60–80 words) for an AI image generator.",
+  "instagram_caption": "Engaging Instagram caption with emojis in {language}, 150–200 words.",
   "hashtags": ["hashtag1", "hashtag2"]
 }}
 
 Rules:
 - hashtags array must contain 15–20 items, without the # symbol
-- Do NOT wrap the JSON in markdown code fences
-- Do NOT add any text outside the JSON object
+- Do NOT wrap the JSON in markdown
+- Do NOT add text outside JSON
 """
 
     try:
-        response = model.generate_content(prompt)
-        raw = response.text.strip()
+        headers = {
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json"
+        }
 
-        # Safety strip — remove accidental markdown fences
+        payload = {
+            "model": "google/gemma-4-26b-a4b-it:free",
+            "messages": [
+                {
+                    "role": "system",
+                    "content": "You are an expert creative marketing strategist. Always return valid JSON only."
+                },
+                {
+                    "role": "user",
+                    "content": prompt
+                }
+            ]
+        }
+
+        response = requests.post(OPENROUTER_URL, headers=headers, json=payload)
+        result = response.json()
+
+        # 🔍 Ambil output teks dari OpenRouter
+        raw = result["choices"][0]["message"]["content"].strip()
+
+        # Safety strip markdown
         if raw.startswith("```"):
             raw = raw.split("```")[1]
             if raw.startswith("json"):
@@ -82,19 +94,17 @@ Rules:
 
         campaign = json.loads(raw)
 
-        # ── Build Pollinations.ai image URL (free, no API key needed) ──────────
-        img_prompt   = campaign.get("image_prompt", "")
-        encoded      = urllib.parse.quote(img_prompt)
-        image_url    = (
-            f"https://image.pollinations.ai/prompt/{encoded}"
-            f"?width=1024&height=1024&nologo=true&enhance=true&seed=42"
-        )
+        # ── Generate image URL ────────────────────────────────────────────────
+        img_prompt = campaign.get("image_prompt", "")
+        encoded = urllib.parse.quote(img_prompt)
+        image_url = f"https://image.pollinations.ai/prompt/{encoded}?width=1024&height=1024&seed=42"
+
         campaign["image_url"] = image_url
 
         return jsonify({"success": True, "data": campaign})
 
     except json.JSONDecodeError as e:
-        return jsonify({"success": False, "error": f"Gagal parse respons AI: {e}"}), 500
+        return jsonify({"success": False, "error": f"Gagal parse JSON: {e}"}), 500
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
