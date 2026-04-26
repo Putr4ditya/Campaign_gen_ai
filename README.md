@@ -6,12 +6,12 @@ Aplikasi web berbasis **Flask** yang membantu UMKM membuat kampanye kreatif seca
 
 ## ✨ Fitur Utama
 
-| Fitur | Teknologi |
-|---|---|
-| Copywriting & Headline | Open Router API (Teks → Teks) |
-| Visual Produk | Open Router API (Teks → Gambar) |
-| Instagram Caption | Open Router API (Teks → Teks) |
-| Hashtag Generator | Open Router API (Teks → Teks) |
+| Fitur                  | Teknologi                           |
+| ---------------------- | ----------------------------------- |
+| Copywriting & Headline | Gemini API (Teks → Teks)            |
+| Visual Produk          | Pollinations.ai API (Teks → Gambar) |
+| Instagram Caption      | Gemini API (Teks → Teks)            |
+| Hashtag Generator      | Gemini API (Teks → Teks)            |
 
 ## 🏗️ Arsitektur Sistem
 
@@ -34,28 +34,33 @@ User Input (Nama Produk + Target Market + Vibe)
 ## 🚀 Cara Menjalankan
 
 ### 1. Clone & Masuk ke Folder
+
 ```bash
 git clone <repo-url>
 cd campaign-ai
 ```
 
 ### 2. Install Dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
 ### 3. Setup Environment Variables
+
 ```bash
 cp .env.example .env
 # Edit .env dan isi OPENROUTER_API_KEY dengan API key kamu
 ```
 
 ### 4. Dapatkan Gemini API Key (Gratis)
-1. Buka [https://aistudio.google.com/app/apikey](https://openrouter.ai/models)
+
+1. Buka [https://aistudio.google.com/app/apikey]
 2. Klik **Create API Key**
 3. Copy dan paste ke file `.env`
 
 ### 5. Jalankan Aplikasi
+
 ```bash
 python app.py
 ```
@@ -63,19 +68,6 @@ python app.py
 Buka browser: **http://localhost:5000**
 
 ---
-
-## 📁 Struktur Project
-
-```
-campaign-ai/
-├── app.py              # Flask backend + Gemini API integration
-├── requirements.txt    # Python dependencies
-├── .env.example        # Template environment variables
-├── .env                # API keys
-├── .gitignore
-└── templates/
-    └── index.html      # Frontend (HTML + CSS + JS)
-```
 
 ## 👥 Tim
 

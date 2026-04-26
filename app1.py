@@ -9,14 +9,12 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Configure Gemini API
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 if not GEMINI_API_KEY:
     raise ValueError("GEMINI_API_KEY is not set in environment variables.")
 
 genai.configure(api_key=GEMINI_API_KEY)
 
-# ─── Gemini Model ─────────────────────────────────────────────────────────────
 model = genai.GenerativeModel(
     model_name="gemini-3-flash-preview",
     system_instruction=(
@@ -26,7 +24,6 @@ model = genai.GenerativeModel(
     )
 )
 
-# ─── Routes 
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -73,7 +70,6 @@ Rules:
         response = model.generate_content(prompt)
         raw = response.text.strip()
 
-        # Safety strip — remove accidental markdown fences
         if raw.startswith("```"):
             raw = raw.split("```")[1]
             if raw.startswith("json"):
@@ -82,7 +78,6 @@ Rules:
 
         campaign = json.loads(raw)
 
-        # ── Build Pollinations.ai image URL (free, no API key needed) 
         img_prompt   = campaign.get("image_prompt", "")
         encoded      = urllib.parse.quote(img_prompt)
         image_url    = (
